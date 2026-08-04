@@ -50,9 +50,9 @@ chmod 600 ~/.config/youtube-mcp/.env
 Authenticate once, then run either executable from any directory:
 
 ```bash
-youtube-feed-auth
-youtube-feed subscriptions --limit 20
-youtube-feed-mcp
+youtube-personal-feed-auth
+youtube-personal-feed subscriptions --limit 20
+youtube-personal-feed-mcp
 ```
 
 The OAuth token is stored at `~/.config/youtube-mcp/token.json`. You can instead provide `CLIENT_ID` and `CLIENT_SECRET` as environment variables.
@@ -70,14 +70,14 @@ npm run auth
 
 ## Register with an MCP client
 
-- **opencode**: a project-level `.mcp.json` is included. It registers the server as `youtube-feed` with `npx tsx src/index.ts`. Reopen opencode in this directory to pick it up.
+- **opencode**: a project-level `.mcp.json` is included. It registers the server as `youtube-personal-feed` with `npx tsx src/index.ts`. Reopen opencode in this directory to pick it up.
 - **Claude Desktop**: add to `claude_desktop_config.json`:
 
   ```json
   {
     "mcpServers": {
-      "youtube-feed": {
-        "command": "youtube-feed-mcp"
+      "youtube-personal-feed": {
+        "command": "youtube-personal-feed-mcp"
       }
     }
   }
@@ -117,14 +117,14 @@ Use `list_channel_uploads` with that same ID if the channel is not in your subsc
 
 ## CLI
 
-The CLI uses the same OAuth credentials and token as the MCP server. Run `youtube-feed` after global installation, or use `npm run cli --` while developing:
+The CLI uses the same OAuth credentials and token as the MCP server. Run `youtube-personal-feed` after global installation, or use `npm run cli --` while developing:
 
 ```bash
-youtube-feed subscriptions --query running --limit 20
-youtube-feed feed --limit 10 --since-days 7              # all subscriptions
-youtube-feed feed --channel-id UCJaGVXG4KgOUXUtcmAHAOdA # one subscription
-youtube-feed uploads UCJaGVXG4KgOUXUtcmAHAOdA --limit 15 # any channel
-youtube-feed video 64wtzsSQx84
+youtube-personal-feed subscriptions --query running --limit 20
+youtube-personal-feed feed --limit 10 --since-days 7              # all subscriptions
+youtube-personal-feed feed --channel-id UCJaGVXG4KgOUXUtcmAHAOdA # one subscription
+youtube-personal-feed uploads UCJaGVXG4KgOUXUtcmAHAOdA --limit 15 # any channel
+youtube-personal-feed video 64wtzsSQx84
 ```
 
 For local development:
@@ -137,7 +137,7 @@ npm run cli -- uploads UCJaGVXG4KgOUXUtcmAHAOdA --limit 15
 npm run cli -- video 64wtzsSQx84
 ```
 
-Each command writes JSON to standard output. Run `youtube-feed --help` (or `npm run cli -- --help`) for the command reference.
+Each command writes JSON to standard output. Run `youtube-personal-feed --help` (or `npm run cli -- --help`) for the command reference.
 
 ## Quota
 

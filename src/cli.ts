@@ -2,7 +2,7 @@
 
 import { createClient } from "./youtube.js";
 
-const usage = `Usage: youtube-feed <command> [options]
+const usage = `Usage: youtube-personal-feed <command> [options]
 
 Commands:
   subscriptions [--query <text>] [--limit <1-500>]

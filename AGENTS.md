@@ -64,9 +64,9 @@ The package is intended to support global installation and exposes three binarie
 
 | Binary | Purpose |
 |---|---|
-| `youtube-feed` | CLI: `subscriptions`, `feed`, `uploads`, and `video`; writes JSON to stdout. |
-| `youtube-feed-auth` | One-time OAuth loopback authorization flow. |
-| `youtube-feed-mcp` | MCP server over stdio. |
+| `youtube-personal-feed` | CLI: `subscriptions`, `feed`, `uploads`, and `video`; writes JSON to stdout. |
+| `youtube-personal-feed-auth` | One-time OAuth loopback authorization flow. |
+| `youtube-personal-feed-mcp` | MCP server over stdio. |
 
 Keep `package.json` `bin`, `files`, and `prepack` entries aligned with the compiled files in `dist/`. Do not add credentials, tokens, source-only scripts, or `node_modules` to the published package.
 
@@ -95,9 +95,9 @@ Keep `package.json` `bin`, `files`, and `prepack` entries aligned with the compi
 - When modifying API logic, maintain quota-friendly endpoints and cache semantics.
 
 ### 4. Feed and Upload Semantics
-- `buildFeed` / `list_feed` / `youtube-feed feed` aggregates recent uploads across subscriptions and sorts the combined videos by publication date.
+- `buildFeed` / `list_feed` / `youtube-personal-feed feed` aggregates recent uploads across subscriptions and sorts the combined videos by publication date.
 - Its optional `channelId` filter limits the result to one subscribed channel. The implementation also permits a direct channel ID for compatibility with the MCP tool description.
-- `listUploads` / `list_channel_uploads` / `youtube-feed uploads` directly retrieves uploads for one channel, whether or not the user subscribes to it.
+- `listUploads` / `list_channel_uploads` / `youtube-personal-feed uploads` directly retrieves uploads for one channel, whether or not the user subscribes to it.
 - `buildFeed` fetches subscription uploads in batches of 10 to balance responsiveness with API load. Preserve bounded concurrency when changing it.
 
 ### 5. Credentials & Token Security

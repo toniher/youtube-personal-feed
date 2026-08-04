@@ -5,9 +5,9 @@
   "description": "MCP server exposing your personal YouTube subscription feed (Data API v3, OAuth)",
   "license": "MIT",
   "bin": {
-    "youtube-feed": "./dist/cli.js",
-    "youtube-feed-auth": "./dist/auth.js",
-    "youtube-feed-mcp": "./dist/index.js"
+    "youtube-personal-feed": "./dist/cli.js",
+    "youtube-personal-feed-auth": "./dist/auth.js",
+    "youtube-personal-feed-mcp": "./dist/index.js"
   },
   "files": [
     "dist/",
