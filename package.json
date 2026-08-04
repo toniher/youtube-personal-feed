@@ -25,7 +25,20 @@
     "start": "node dist/index.js",
     "smoke": "tsx scripts/smoke.ts",
     "typecheck": "tsc --noEmit",
+    "lint": "biome lint src scripts && biome format src scripts",
+    "format": "biome format --write src scripts",
+    "precommit": "lint-staged && npm run typecheck",
+    "prepare": "simple-git-hooks",
     "prepack": "npm run build"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "biome format --write",
+      "biome lint --write"
+    ]
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npm run precommit"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
@@ -34,11 +47,15 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.7",
     "@types/node": "^22.0.0",
+    "lint-staged": "^16.4.0",
+    "simple-git-hooks": "^2.13.1",
     "tsx": "^4.23.5",
     "typescript": "^5.9.3"
   },
   "allowScripts": {
-    "esbuild@0.28.1": true
+    "esbuild@0.28.1": true,
+    "simple-git-hooks@2.13.1": true
   }
 }

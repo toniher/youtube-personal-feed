@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { createClient } from './youtube.js';
+import { createClient } from "./youtube.js";
 
 const usage = `Usage: youtube-feed <command> [options]
 
@@ -15,17 +15,20 @@ function fail(message: string): never {
   throw new Error(`${message}\n\n${usage}`);
 }
 
-function parseOptions(args: string[]): { positional: string[]; options: Map<string, string> } {
+function parseOptions(args: string[]): {
+  positional: string[];
+  options: Map<string, string>;
+} {
   const positional: string[] = [];
   const options = new Map<string, string>();
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]!;
-    if (!arg.startsWith('--')) {
+    if (!arg.startsWith("--")) {
       positional.push(arg);
       continue;
     }
     const value = args[index + 1];
-    if (!value || value.startsWith('--')) fail(`Missing value for ${arg}.`);
+    if (!value || value.startsWith("--")) fail(`Missing value for ${arg}.`);
     options.set(arg, value);
     index += 1;
   }
@@ -50,7 +53,12 @@ function numberOption(
 
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
-  if (!command || command === '--help' || command === '-h' || command === 'help') {
+  if (
+    !command ||
+    command === "--help" ||
+    command === "-h" ||
+    command === "help"
+  ) {
     console.log(usage);
     return;
   }
@@ -59,40 +67,46 @@ async function main(): Promise<void> {
   const client = createClient();
 
   switch (command) {
-    case 'subscriptions': {
+    case "subscriptions": {
       const subscriptions = await client.listSubscriptions(
-        numberOption(options, '--limit', 50, 1, 500),
-        options.get('--query'),
+        numberOption(options, "--limit", 50, 1, 500),
+        options.get("--query"),
       );
-      console.log(JSON.stringify({ count: subscriptions.length, subscriptions }, null, 2));
+      console.log(
+        JSON.stringify({ count: subscriptions.length, subscriptions }, null, 2),
+      );
       return;
     }
-    case 'feed': {
+    case "feed": {
       const videos = await client.buildFeed(
-        numberOption(options, '--limit', 20, 1, 200),
-        options.has('--since-days')
-          ? numberOption(options, '--since-days', 1, 1, 365)
+        numberOption(options, "--limit", 20, 1, 200),
+        options.has("--since-days")
+          ? numberOption(options, "--since-days", 1, 1, 365)
           : null,
-        options.get('--channel-id'),
+        options.get("--channel-id"),
       );
       console.log(JSON.stringify({ count: videos.length, videos }, null, 2));
       return;
     }
-    case 'uploads': {
+    case "uploads": {
       const [channelId] = positional;
-      if (!channelId || positional.length > 1) fail('uploads requires exactly one channel ID.');
+      if (!channelId || positional.length > 1)
+        fail("uploads requires exactly one channel ID.");
       const videos = await client.listUploads(
         channelId,
-        numberOption(options, '--limit', 15, 1, 50),
+        numberOption(options, "--limit", 15, 1, 50),
         true,
       );
       console.log(JSON.stringify({ count: videos.length, videos }, null, 2));
       return;
     }
-    case 'video': {
+    case "video": {
       const [videoId] = positional;
-      if (!videoId || positional.length > 1) fail('video requires exactly one video ID.');
-      console.log(JSON.stringify(await client.getVideoDetail(videoId), null, 2));
+      if (!videoId || positional.length > 1)
+        fail("video requires exactly one video ID.");
+      console.log(
+        JSON.stringify(await client.getVideoDetail(videoId), null, 2),
+      );
       return;
     }
     default:

@@ -1,25 +1,31 @@
-import { readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-export const YOUTUBE_SCOPE = 'https://www.googleapis.com/auth/youtube.readonly';
+export const YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.readonly";
 
-export const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+export const PROJECT_ROOT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
 
 export function loadEnv(): void {
-  const configDir = process.env.XDG_CONFIG_HOME || join(homedir(), '.config');
-  for (const envPath of [join(PROJECT_ROOT, '.env'), join(configDir, 'youtube-mcp', '.env')]) {
+  const configDir = process.env.XDG_CONFIG_HOME || join(homedir(), ".config");
+  for (const envPath of [
+    join(PROJECT_ROOT, ".env"),
+    join(configDir, "youtube-mcp", ".env"),
+  ]) {
     let raw: string;
     try {
-      raw = readFileSync(envPath, 'utf8');
+      raw = readFileSync(envPath, "utf8");
     } catch {
       continue;
     }
-    for (const line of raw.split('\n')) {
+    for (const line of raw.split("\n")) {
       const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      const eq = trimmed.indexOf('=');
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eq = trimmed.indexOf("=");
       if (eq <= 0) continue;
       const key = trimmed.slice(0, eq).trim();
       const value = trimmed.slice(eq + 1).trim();
@@ -29,11 +35,11 @@ export function loadEnv(): void {
 }
 
 export function getClientId(): string {
-  return process.env.CLIENT_ID ?? '';
+  return process.env.CLIENT_ID ?? "";
 }
 
 export function getClientSecret(): string {
-  return process.env.CLIENT_SECRET ?? '';
+  return process.env.CLIENT_SECRET ?? "";
 }
 
 export function hasCredentials(): boolean {
@@ -42,13 +48,13 @@ export function hasCredentials(): boolean {
 
 export function credentialsMissingMessage(): string {
   return [
-    'Missing Google OAuth credentials.',
-    '1. Create a Desktop OAuth client in Google Cloud Console (see README.md).',
-    '2. Set CLIENT_ID and CLIENT_SECRET in the environment, .env, or ~/.config/youtube-mcp/.env.',
-  ].join(' ');
+    "Missing Google OAuth credentials.",
+    "1. Create a Desktop OAuth client in Google Cloud Console (see README.md).",
+    "2. Set CLIENT_ID and CLIENT_SECRET in the environment, .env, or ~/.config/youtube-mcp/.env.",
+  ].join(" ");
 }
 
 export function tokenFilePath(): string {
-  const base = process.env.XDG_CONFIG_HOME || join(homedir(), '.config');
-  return join(base, 'youtube-mcp', 'token.json');
+  const base = process.env.XDG_CONFIG_HOME || join(homedir(), ".config");
+  return join(base, "youtube-mcp", "token.json");
 }

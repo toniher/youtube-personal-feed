@@ -147,9 +147,13 @@ The YouTube Data API default quota is **10,000 units/day**. List calls cost ~1 u
 
 ```bash
 npm run typecheck   # type-check
+npm run lint        # lint and check formatting
+npm run format      # apply source formatting
 npm run build       # compile to dist/
 npm run smoke       # sanity check auth + subscriptions (prints real data)
 ```
+
+Commits run staged TypeScript files through Biome and then run `npm run typecheck`. Bypass this only when necessary with `git commit --no-verify`.
 
 ## Project layout
 
