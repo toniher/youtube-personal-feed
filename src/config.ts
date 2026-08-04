@@ -8,21 +8,23 @@ export const YOUTUBE_SCOPE = 'https://www.googleapis.com/auth/youtube.readonly';
 export const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 export function loadEnv(): void {
-  const envPath = join(PROJECT_ROOT, '.env');
-  let raw: string;
-  try {
-    raw = readFileSync(envPath, 'utf8');
-  } catch {
-    return;
-  }
-  for (const line of raw.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eq = trimmed.indexOf('=');
-    if (eq <= 0) continue;
-    const key = trimmed.slice(0, eq).trim();
-    const value = trimmed.slice(eq + 1).trim();
-    if (key && process.env[key] === undefined) process.env[key] = value;
+  const configDir = process.env.XDG_CONFIG_HOME || join(homedir(), '.config');
+  for (const envPath of [join(PROJECT_ROOT, '.env'), join(configDir, 'youtube-mcp', '.env')]) {
+    let raw: string;
+    try {
+      raw = readFileSync(envPath, 'utf8');
+    } catch {
+      continue;
+    }
+    for (const line of raw.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eq = trimmed.indexOf('=');
+      if (eq <= 0) continue;
+      const key = trimmed.slice(0, eq).trim();
+      const value = trimmed.slice(eq + 1).trim();
+      if (key && process.env[key] === undefined) process.env[key] = value;
+    }
   }
 }
 
@@ -42,7 +44,7 @@ export function credentialsMissingMessage(): string {
   return [
     'Missing Google OAuth credentials.',
     '1. Create a Desktop OAuth client in Google Cloud Console (see README.md).',
-    '2. Put CLIENT_ID and CLIENT_SECRET in the .env file (copy .env.example).',
+    '2. Set CLIENT_ID and CLIENT_SECRET in the environment, .env, or ~/.config/youtube-mcp/.env.',
   ].join(' ');
 }
 

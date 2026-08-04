@@ -1,13 +1,19 @@
 {
   "name": "youtube-personal-feed",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "MCP server exposing your personal YouTube subscription feed (Data API v3, OAuth)",
   "license": "MIT",
   "bin": {
+    "youtube-feed": "./dist/cli.js",
+    "youtube-feed-auth": "./dist/auth.js",
     "youtube-feed-mcp": "./dist/index.js"
   },
+  "files": [
+    "dist/",
+    "README.md",
+    ".env.example"
+  ],
   "engines": {
     "node": ">=18"
   },
@@ -15,9 +21,11 @@
     "auth": "tsx src/auth.ts",
     "dev": "tsx src/index.ts",
     "build": "tsc -p tsconfig.build.json",
+    "cli": "tsx src/cli.ts",
     "start": "node dist/index.js",
     "smoke": "tsx scripts/smoke.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

@@ -28,6 +28,37 @@ An MCP server that connects to your personal YouTube account and exposes your **
 
 ## Install and authenticate
 
+### Global installation
+
+Install the published package globally to run the CLI and MCP server from any directory:
+
+```bash
+npm install -g youtube-personal-feed
+```
+
+Create `~/.config/youtube-mcp/.env` with your Google Desktop OAuth credentials:
+
+```bash
+mkdir -p ~/.config/youtube-mcp
+cat > ~/.config/youtube-mcp/.env <<'EOF'
+CLIENT_ID=xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
+CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx
+EOF
+chmod 600 ~/.config/youtube-mcp/.env
+```
+
+Authenticate once, then run either executable from any directory:
+
+```bash
+youtube-feed-auth
+youtube-feed subscriptions --limit 20
+youtube-feed-mcp
+```
+
+The OAuth token is stored at `~/.config/youtube-mcp/token.json`. You can instead provide `CLIENT_ID` and `CLIENT_SECRET` as environment variables.
+
+### Local development
+
 ```bash
 npm install
 npm run auth
@@ -46,15 +77,13 @@ npm run auth
   {
     "mcpServers": {
       "youtube-feed": {
-        "command": "npx",
-        "args": ["tsx", "src/index.ts"],
-        "cwd": "/absolute/path/to/youtube-personal-feed"
+        "command": "youtube-feed-mcp"
       }
     }
   }
   ```
 
-- **Production-ish**: `npm run build` then point the client at `node /absolute/path/to/dist/index.js`.
+- **Local development**: use `npx tsx src/index.ts` with `cwd` set to the repository.
 
 ## Tools
 
@@ -66,6 +95,44 @@ npm run auth
 | `get_video` | `videoId` | snippet/contentDetails/statistics + videoUrl + channelUrl |
 
 Feed items always include `videoUrl` in the form `https://www.youtube.com/watch?v=<id>` — the format accepted by most transcript-extraction MCP servers.
+
+### Get a feed for one subscription
+
+1. Call `list_subscriptions` and copy the desired channel's `channelId`.
+2. Pass that ID to `list_feed` to return uploads from that subscription only:
+
+   ```json
+   {
+     "channelId": "UCJaGVXG4KgOUXUtcmAHAOdA",
+     "limit": 10
+   }
+   ```
+
+`list_channel_uploads` accepts the same `channelId` when you need uploads from a channel that is not in your subscriptions.
+
+## CLI
+
+The CLI uses the same OAuth credentials and token as the MCP server. Run `youtube-feed` after global installation, or use `npm run cli --` while developing:
+
+```bash
+youtube-feed subscriptions --query running --limit 20
+youtube-feed feed --limit 10 --since-days 7
+youtube-feed feed --channel-id UCJaGVXG4KgOUXUtcmAHAOdA --limit 10
+youtube-feed uploads UCJaGVXG4KgOUXUtcmAHAOdA --limit 15
+youtube-feed video 64wtzsSQx84
+```
+
+For local development:
+
+```bash
+npm run cli -- subscriptions --query running --limit 20
+npm run cli -- feed --limit 10 --since-days 7
+npm run cli -- feed --channel-id UCJaGVXG4KgOUXUtcmAHAOdA --limit 10
+npm run cli -- uploads UCJaGVXG4KgOUXUtcmAHAOdA --limit 15
+npm run cli -- video 64wtzsSQx84
+```
+
+Each command writes JSON to standard output. Run `youtube-feed --help` (or `npm run cli -- --help`) for the command reference.
 
 ## Quota
 
