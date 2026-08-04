@@ -96,19 +96,24 @@ npm run auth
 
 Feed items always include `videoUrl` in the form `https://www.youtube.com/watch?v=<id>` — the format accepted by most transcript-extraction MCP servers.
 
-### Get a feed for one subscription
+### `list_feed` vs. `list_channel_uploads`
 
-1. Call `list_subscriptions` and copy the desired channel's `channelId`.
-2. Pass that ID to `list_feed` to return uploads from that subscription only:
+| Use case | Tool | Behavior |
+|---|---|---|
+| See recent videos from all subscriptions | `list_feed` | Fetches recent uploads across your subscriptions and sorts the combined results by publication date. |
+| See recent videos from one subscription | `list_feed` with `channelId` | Limits the subscription feed to that channel. |
+| See recent videos from any known channel | `list_channel_uploads` | Fetches that channel directly; it does not need to be one of your subscriptions. |
 
-   ```json
-   {
-     "channelId": "UCJaGVXG4KgOUXUtcmAHAOdA",
-     "limit": 10
-   }
-   ```
+For example, first call `list_subscriptions` to obtain a subscribed channel's `channelId`, then pass it to `list_feed`:
 
-`list_channel_uploads` accepts the same `channelId` when you need uploads from a channel that is not in your subscriptions.
+```json
+{
+  "channelId": "UCJaGVXG4KgOUXUtcmAHAOdA",
+  "limit": 10
+}
+```
+
+Use `list_channel_uploads` with that same ID if the channel is not in your subscriptions, or if you specifically want a direct per-channel lookup.
 
 ## CLI
 
@@ -116,9 +121,9 @@ The CLI uses the same OAuth credentials and token as the MCP server. Run `youtub
 
 ```bash
 youtube-feed subscriptions --query running --limit 20
-youtube-feed feed --limit 10 --since-days 7
-youtube-feed feed --channel-id UCJaGVXG4KgOUXUtcmAHAOdA --limit 10
-youtube-feed uploads UCJaGVXG4KgOUXUtcmAHAOdA --limit 15
+youtube-feed feed --limit 10 --since-days 7              # all subscriptions
+youtube-feed feed --channel-id UCJaGVXG4KgOUXUtcmAHAOdA # one subscription
+youtube-feed uploads UCJaGVXG4KgOUXUtcmAHAOdA --limit 15 # any channel
 youtube-feed video 64wtzsSQx84
 ```
 

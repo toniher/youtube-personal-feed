@@ -1,6 +1,6 @@
 # Agent Guidelines for YouTube Personal Feed MCP Server
 
-This repository implements an MCP (Model Context Protocol) server exposing a user's personal YouTube subscription feed and video details using the YouTube Data API v3 and Google OAuth 2.0.
+This repository provides an MCP (Model Context Protocol) server and a CLI for a user's personal YouTube subscription feed and video details using the YouTube Data API v3 and Google OAuth 2.0.
 
 ## Project Overview
 
@@ -8,7 +8,8 @@ This repository implements an MCP (Model Context Protocol) server exposing a use
 - **Runtime:** Node.js (>= 18), TypeScript (ES2022 / NodeNext ESM)
 - **Protocol:** MCP over `stdio` transport (`@modelcontextprotocol/sdk`)
 - **API Integration:** YouTube Data API v3 via `googleapis` and `google-auth-library`
-- **Key Purpose:** Enable LLM agents to list subscriptions, build subscription video feeds, query channel uploads, and retrieve video details.
+- **Interfaces:** MCP over stdio and JSON-output CLI
+- **Key Purpose:** List subscriptions, build subscription video feeds, query channel uploads, and retrieve video details.
 
 ---
 
@@ -17,6 +18,7 @@ This repository implements an MCP (Model Context Protocol) server exposing a use
 ```
 youtube-personal-feed/
 ├── package.json           # Scripts, dependencies, binary definition
+├── LICENSE                # MIT license
 ├── tsconfig.json          # Root TypeScript config (ES2022, NodeNext)
 ├── tsconfig.build.json    # Build-specific config (compiles src/ -> dist/)
 ├── .env.example           # Template for CLIENT_ID and CLIENT_SECRET
@@ -26,6 +28,7 @@ youtube-personal-feed/
     ├── config.ts          # Environment loading (.env) and path helper functions
     ├── types.ts           # Shared TypeScript interfaces (SubscriptionItem, FeedVideo, VideoDetail)
     ├── auth.ts            # One-time OAuth 2.0 loopback server flow
+    ├── cli.ts             # JSON-output CLI entrypoint
     ├── youtube.ts         # YouTube API wrapper client with in-memory caching & error mapping
     └── index.ts           # MCP server entrypoint exposing tools over stdio
 ```
@@ -41,7 +44,21 @@ youtube-personal-feed/
 | `npm run dev` | Runs the MCP server in development mode using `tsx src/index.ts`. |
 | `npm run start` | Runs the production build (`node dist/index.js`). |
 | `npm run auth` | Launches the local loopback server to handle Google OAuth authentication. |
+| `npm run cli -- <args>` | Runs the CLI from source; for example, `npm run cli -- feed --limit 10`. |
 | `npm run smoke` | Executes the smoke test script (`scripts/smoke.ts`) to test API operations. |
+| `npm pack --dry-run` | Verifies the files included in the published npm package. |
+
+## Published Binaries
+
+The package is intended to support global installation and exposes three binaries:
+
+| Binary | Purpose |
+|---|---|
+| `youtube-feed` | CLI: `subscriptions`, `feed`, `uploads`, and `video`; writes JSON to stdout. |
+| `youtube-feed-auth` | One-time OAuth loopback authorization flow. |
+| `youtube-feed-mcp` | MCP server over stdio. |
+
+Keep `package.json` `bin`, `files`, and `prepack` entries aligned with the compiled files in `dist/`. Do not add credentials, tokens, source-only scripts, or `node_modules` to the published package.
 
 ---
 
@@ -59,15 +76,24 @@ youtube-personal-feed/
 
 ### 3. Caching & Quota Efficiency
 - YouTube Data API v3 enforces a daily quota budget (default 10,000 units).
-- Channel uploads are fetched by querying the uploads playlist (`UU<channelId>`) via `playlistItems.list`, which costs **1 unit per request** compared to 100 units for `search.list`.
+- Channel uploads are fetched by replacing a channel ID's `UC` prefix with `UU` and querying the resulting uploads playlist via `playlistItems.list`, which costs **1 unit per request** compared to 100 units for `search.list`.
+- Fetch only the requested newest uploads; do not page through a channel's full upload history for a feed request.
 - In-memory caching is implemented in `YouTubeClient`:
   - `subscriptionsCache`: TTL = 30 minutes (`SUBSCRIPTIONS_TTL_MS`)
   - `uploadsCache`: TTL = 10 minutes (`UPLOADS_TTL_MS`)
   - `videoCache`: TTL = 10 minutes (`UPLOADS_TTL_MS`)
 - When modifying API logic, maintain quota-friendly endpoints and cache semantics.
 
-### 4. Credentials & Token Security
+### 4. Feed and Upload Semantics
+- `buildFeed` / `list_feed` / `youtube-feed feed` aggregates recent uploads across subscriptions and sorts the combined videos by publication date.
+- Its optional `channelId` filter limits the result to one subscribed channel. The implementation also permits a direct channel ID for compatibility with the MCP tool description.
+- `listUploads` / `list_channel_uploads` / `youtube-feed uploads` directly retrieves uploads for one channel, whether or not the user subscribes to it.
+- `buildFeed` fetches subscription uploads in batches of 10 to balance responsiveness with API load. Preserve bounded concurrency when changing it.
+
+### 5. Credentials & Token Security
 - OAuth tokens are saved outside the repository at `~/.config/youtube-mcp/token.json` (or `$XDG_CONFIG_HOME/youtube-mcp/token.json`) with restrictive file permissions (`0o600`).
+- Credentials resolve in this precedence order: existing `CLIENT_ID` and `CLIENT_SECRET` environment variables, repository `.env`, then `$XDG_CONFIG_HOME/youtube-mcp/.env` (normally `~/.config/youtube-mcp/.env`).
+- The global config file should be created with `0o600` permissions.
 - **NEVER** expose, log, or commit client secrets or token contents.
 
 ---
@@ -77,5 +103,6 @@ youtube-personal-feed/
 When making changes to this codebase, follow these steps:
 
 1. **Verify Types:** Run `npm run typecheck` to ensure there are no compilation errors or interface mismatches.
-2. **Build Verification:** Run `npm run build` if output distribution code (`dist/`) needs to be updated or tested.
-3. **Functional Verification:** If credentials and tokens are present, execute `npm run smoke` to verify end-to-end integration with the YouTube API.
+2. **Build Verification:** Run `npm run build` to validate `dist/` and every binary entrypoint.
+3. **Package Verification:** When changing package metadata or binaries, run `npm pack --dry-run`.
+4. **Functional Verification:** If credentials and tokens are present, execute `npm run smoke` and an appropriate `npm run cli -- ...` command to verify API operations.
