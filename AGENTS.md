@@ -46,7 +46,17 @@ youtube-personal-feed/
 | `npm run auth` | Launches the local loopback server to handle Google OAuth authentication. |
 | `npm run cli -- <args>` | Runs the CLI from source; for example, `npm run cli -- feed --limit 10`. |
 | `npm run smoke` | Executes the smoke test script (`scripts/smoke.ts`) to test API operations. |
+| `npm run lint` | Lints TypeScript sources and verifies their Biome formatting. |
+| `npm run format` | Applies Biome formatting to TypeScript sources. |
+| `npm run precommit` | Runs the staged-file checks and full TypeScript typecheck used by the pre-commit hook. |
 | `npm pack --dry-run` | Verifies the files included in the published npm package. |
+
+## Code Quality Hooks
+
+- `npm install` runs `prepare`, which installs the `simple-git-hooks` pre-commit hook.
+- The hook runs Biome formatting and linting on staged `.ts` files through `lint-staged`, then runs `npm run typecheck` for the full project.
+- Run `npm run format` before committing formatting changes, and `npm run lint` before submitting changes that modify TypeScript.
+- Do not use `git commit --no-verify` unless a maintainer has explicitly approved bypassing the checks.
 
 ## Published Binaries
 
@@ -102,7 +112,8 @@ Keep `package.json` `bin`, `files`, and `prepack` entries aligned with the compi
 
 When making changes to this codebase, follow these steps:
 
-1. **Verify Types:** Run `npm run typecheck` to ensure there are no compilation errors or interface mismatches.
-2. **Build Verification:** Run `npm run build` to validate `dist/` and every binary entrypoint.
-3. **Package Verification:** When changing package metadata or binaries, run `npm pack --dry-run`.
-4. **Functional Verification:** If credentials and tokens are present, execute `npm run smoke` and an appropriate `npm run cli -- ...` command to verify API operations.
+1. **Format and Lint:** Run `npm run format` as needed, then `npm run lint` to validate TypeScript style and lint rules.
+2. **Verify Types:** Run `npm run typecheck` to ensure there are no compilation errors or interface mismatches.
+3. **Build Verification:** Run `npm run build` to validate `dist/` and every binary entrypoint.
+4. **Package Verification:** When changing package metadata or binaries, run `npm pack --dry-run`.
+5. **Functional Verification:** If credentials and tokens are present, execute `npm run smoke` and an appropriate `npm run cli -- ...` command to verify API operations.

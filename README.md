@@ -153,7 +153,7 @@ npm run build       # compile to dist/
 npm run smoke       # sanity check auth + subscriptions (prints real data)
 ```
 
-Commits run staged TypeScript files through Biome and then run `npm run typecheck`. Bypass this only when necessary with `git commit --no-verify`.
+`npm install` installs a pre-commit hook. Commits run staged TypeScript files through Biome and then run `npm run typecheck`. Bypass this only when necessary with `git commit --no-verify`.
 
 ## Project layout
 
