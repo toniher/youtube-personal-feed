@@ -3,6 +3,10 @@
   "version": "0.1.1",
   "type": "module",
   "description": "MCP server exposing your personal YouTube subscription feed (Data API v3, OAuth)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toniher/youtube-personal-feed"
+  },
   "license": "MIT",
   "bin": {
     "youtube-personal-feed": "./dist/cli.js",
