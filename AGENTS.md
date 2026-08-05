@@ -22,6 +22,8 @@ youtube-personal-feed/
 ├── tsconfig.json          # Root TypeScript config (ES2022, NodeNext)
 ├── tsconfig.build.json    # Build-specific config (compiles src/ -> dist/)
 ├── .env.example           # Template for CLIENT_ID and CLIENT_SECRET
+├── .github/workflows/
+│   └── publish.yml         # Release-triggered npm publishing workflow
 ├── scripts/
 │   └── smoke.ts           # Standalone smoke test script
 └── src/
@@ -50,6 +52,8 @@ youtube-personal-feed/
 | `npm run format` | Applies Biome formatting to TypeScript sources. |
 | `npm run precommit` | Runs the staged-file checks and full TypeScript typecheck used by the pre-commit hook. |
 | `npm pack --dry-run` | Verifies the files included in the published npm package. |
+
+The release workflow runs `npm ci`, linting, type checking, and a build before publishing. For release-triggered runs, the GitHub release tag with an optional leading `v` removed must match `package.json`'s version.
 
 ## Code Quality Hooks
 
@@ -89,14 +93,16 @@ Keep `package.json` `bin`, `files`, and `prepack` entries aligned with the compi
 - Channel uploads are fetched by replacing a channel ID's `UC` prefix with `UU` and querying the resulting uploads playlist via `playlistItems.list`, which costs **1 unit per request** compared to 100 units for `search.list`.
 - Fetch only the requested newest uploads; do not page through a channel's full upload history for a feed request.
 - In-memory caching is implemented in `YouTubeClient`:
-  - `subscriptionsCache`: TTL = 30 minutes (`SUBSCRIPTIONS_TTL_MS`)
-  - `uploadsCache`: TTL = 10 minutes (`UPLOADS_TTL_MS`)
-  - `videoCache`: TTL = 10 minutes (`UPLOADS_TTL_MS`)
+- `subscriptionsCache`: TTL = 30 minutes (`SUBSCRIPTIONS_TTL_MS`)
+- `uploadsCache`: TTL = 10 minutes (`UPLOADS_TTL_MS`)
+- `videoCache`: TTL = 10 minutes (`UPLOADS_TTL_MS`)
+- `buildFeed` uses the uploads cache, but `list_channel_uploads` deliberately calls `listUploads` with `forceRefresh`; do not describe direct channel lookups as cached.
+- All caches are process-local. CLI invocations start with empty caches, while a long-running MCP server can reuse them.
 - When modifying API logic, maintain quota-friendly endpoints and cache semantics.
 
 ### 4. Feed and Upload Semantics
 - `buildFeed` / `list_feed` / `youtube-personal-feed feed` aggregates recent uploads across subscriptions and sorts the combined videos by publication date.
-- Its optional `channelId` filter limits the result to one subscribed channel. The implementation also permits a direct channel ID for compatibility with the MCP tool description.
+- Its optional `channelId` filter limits the result to one subscribed channel. If the ID is not subscribed, the implementation fetches that channel directly.
 - `listUploads` / `list_channel_uploads` / `youtube-personal-feed uploads` directly retrieves uploads for one channel, whether or not the user subscribes to it.
 - `buildFeed` fetches subscription uploads in batches of 10 to balance responsiveness with API load. Preserve bounded concurrency when changing it.
 

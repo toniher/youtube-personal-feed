@@ -1,5 +1,7 @@
 # youtube-personal-feed
 
+[![npm version](https://img.shields.io/npm/v/youtube-personal-feed?logo=npm)](https://www.npmjs.com/package/youtube-personal-feed)
+
 An MCP server that connects to your personal YouTube account and exposes your **subscription feed** to AI assistants: list your subscribed channels, list the most recent uploads across your feed, and get `https://www.youtube.com/watch?v=` links that can be handed off to other MCPs (for example transcript-extraction tools).
 
 ## Requirements
@@ -30,7 +32,7 @@ An MCP server that connects to your personal YouTube account and exposes your **
 
 ### Global installation
 
-Install the published package globally to run the CLI and MCP server from any directory:
+Install the [published package on npm](https://www.npmjs.com/package/youtube-personal-feed) globally to run the CLI and MCP server from any directory:
 
 ```bash
 npm install -g youtube-personal-feed
@@ -70,7 +72,7 @@ npm run auth
 
 ## Register with an MCP client
 
-- **opencode**: a project-level `.mcp.json` is included. It registers the server as `youtube-personal-feed` with `npx tsx src/index.ts`. Reopen opencode in this directory to pick it up.
+- **OpenCode**: register `youtube-personal-feed-mcp` as an stdio MCP command in your OpenCode configuration. For local development, use `npx tsx src/index.ts` with `cwd` set to the repository.
 - **Claude Desktop**: add to `claude_desktop_config.json`:
 
   ```json
@@ -89,10 +91,10 @@ npm run auth
 
 | Tool | Inputs | Output |
 |---|---|---|
-| `list_subscriptions` | `query?`, `maxResults?` (default 50) | channelId, title, channelUrl, thumbnail, publishedAt |
-| `list_feed` | `limit?` (default 20), `sinceDays?`, `channelId?` | latest uploads across subscriptions: videoId, title, channelTitle, publishedAt, **videoUrl** |
-| `list_channel_uploads` | `channelId`, `maxResults?` (default 15) | uploads for any channel, same fields |
-| `get_video` | `videoId` | snippet/contentDetails/statistics + videoUrl + channelUrl |
+| `list_subscriptions` | `query?`, `maxResults?` (default 50; 1-500) | `count` and subscriptions with channel ID, title, description, thumbnail URL, publication date, and channel URL |
+| `list_feed` | `limit?` (default 20; 1-200), `sinceDays?` (1-365), `channelId?` | `count` and latest uploads: video ID, title, channel ID/title, publication date, description, and **videoUrl** |
+| `list_channel_uploads` | `channelId`, `maxResults?` (default 15; 1-50) | `count` and uploads for any channel, using the feed-video fields |
+| `get_video` | `videoId` | video metadata, duration, available statistics, live status, video URL, and channel URL |
 
 Feed items always include `videoUrl` in the form `https://www.youtube.com/watch?v=<id>` — the format accepted by most transcript-extraction MCP servers.
 
@@ -101,7 +103,7 @@ Feed items always include `videoUrl` in the form `https://www.youtube.com/watch?
 | Use case | Tool | Behavior |
 |---|---|---|
 | See recent videos from all subscriptions | `list_feed` | Fetches recent uploads across your subscriptions and sorts the combined results by publication date. |
-| See recent videos from one subscription | `list_feed` with `channelId` | Limits the subscription feed to that channel. |
+| See recent videos from one channel in your feed | `list_feed` with `channelId` | Limits the subscription feed to that channel. A channel ID outside your subscriptions also works. |
 | See recent videos from any known channel | `list_channel_uploads` | Fetches that channel directly; it does not need to be one of your subscriptions. |
 
 For example, first call `list_subscriptions` to obtain a subscribed channel's `channelId`, then pass it to `list_feed`:
@@ -141,7 +143,9 @@ Each command writes JSON to standard output. Run `youtube-personal-feed --help` 
 
 ## Quota
 
-The YouTube Data API default quota is **10,000 units/day**. List calls cost ~1 unit each. This server caches subscriptions for 30 minutes and per-channel uploads for 10 minutes, so a full feed refresh over ~100 subscriptions costs about 100 units. If you hit the quota, the tools return a clear error; wait until the next day or request more quota.
+The YouTube Data API default quota is **10,000 units/day**. Subscription and playlist list calls cost ~1 unit each. A full feed refresh over ~100 subscriptions therefore costs about 100 upload-playlist requests plus the subscription request.
+
+The process caches `list_subscriptions` results for 30 minutes. Feed builds cache per-channel uploads for 10 minutes, while direct `list_channel_uploads` requests deliberately refresh that channel. Caches are in memory, so they reset whenever the CLI process or MCP server restarts. If you hit the quota, the tools return a clear error; wait until the next day or request more quota.
 
 ## Development
 
@@ -151,9 +155,12 @@ npm run lint        # lint and check formatting
 npm run format      # apply source formatting
 npm run build       # compile to dist/
 npm run smoke       # sanity check auth + subscriptions (prints real data)
+npm pack --dry-run  # inspect the files that would be published
 ```
 
 `npm install` installs a pre-commit hook. Commits run staged TypeScript files through Biome and then run `npm run typecheck`. Bypass this only when necessary with `git commit --no-verify`.
+
+Publishing is automated by `.github/workflows/publish.yml`: publishing a GitHub release runs linting, type checking, and a build before publishing to npm. The release tag, without its optional `v` prefix, must match the version in `package.json`.
 
 ## Project layout
 
@@ -164,4 +171,5 @@ src/youtube.ts  # YouTube Data API v3 wrapper + caching
 src/index.ts    # MCP server (McpServer, stdio, 4 tools)
 src/types.ts    # shared types
 scripts/smoke.ts
+.github/workflows/publish.yml  # release-triggered npm publish workflow
 ```
