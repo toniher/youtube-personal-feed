@@ -14,7 +14,7 @@ export function loadEnv(): void {
   const configDir = process.env.XDG_CONFIG_HOME || join(homedir(), ".config");
   for (const envPath of [
     join(PROJECT_ROOT, ".env"),
-    join(configDir, "youtube-mcp", ".env"),
+    join(configDir, "youtube-personal-mcp", ".env"),
   ]) {
     let raw: string;
     try {
@@ -50,11 +50,11 @@ export function credentialsMissingMessage(): string {
   return [
     "Missing Google OAuth credentials.",
     "1. Create a Desktop OAuth client in Google Cloud Console (see README.md).",
-    "2. Set CLIENT_ID and CLIENT_SECRET in the environment, .env, or ~/.config/youtube-mcp/.env.",
+    "2. Set CLIENT_ID and CLIENT_SECRET in the environment, .env, or ~/.config/youtube-personal-mcp/.env.",
   ].join(" ");
 }
 
 export function tokenFilePath(): string {
   const base = process.env.XDG_CONFIG_HOME || join(homedir(), ".config");
-  return join(base, "youtube-mcp", "token.json");
+  return join(base, "youtube-personal-mcp", "token.json");
 }

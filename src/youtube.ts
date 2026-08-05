@@ -44,7 +44,7 @@ function createOAuthClient(): OAuth2Client {
   const tokens = readTokens();
   if (!tokens) {
     throw new AuthError(
-      "Not authenticated. Run `npm run auth` once to connect your YouTube account.",
+      "Not authenticated. Run `youtube-personal-feed-auth` once to connect your YouTube account.",
     );
   }
   client.setCredentials(

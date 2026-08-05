@@ -107,8 +107,8 @@ Keep `package.json` `bin`, `files`, and `prepack` entries aligned with the compi
 - `buildFeed` fetches subscription uploads in batches of 10 to balance responsiveness with API load. Preserve bounded concurrency when changing it.
 
 ### 5. Credentials & Token Security
-- OAuth tokens are saved outside the repository at `~/.config/youtube-mcp/token.json` (or `$XDG_CONFIG_HOME/youtube-mcp/token.json`) with restrictive file permissions (`0o600`).
-- Credentials resolve in this precedence order: existing `CLIENT_ID` and `CLIENT_SECRET` environment variables, repository `.env`, then `$XDG_CONFIG_HOME/youtube-mcp/.env` (normally `~/.config/youtube-mcp/.env`).
+- OAuth tokens are saved outside the repository at `~/.config/youtube-personal-mcp/token.json` (or `$XDG_CONFIG_HOME/youtube-personal-mcp/token.json`) with restrictive file permissions (`0o600`).
+- Credentials resolve in this precedence order: existing `CLIENT_ID` and `CLIENT_SECRET` environment variables, repository `.env`, then `$XDG_CONFIG_HOME/youtube-personal-mcp/.env` (normally `~/.config/youtube-personal-mcp/.env`).
 - The global config file should be created with `0o600` permissions.
 - **NEVER** expose, log, or commit client secrets or token contents.
 

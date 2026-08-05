@@ -38,15 +38,15 @@ Install the [published package on npm](https://www.npmjs.com/package/youtube-per
 npm install -g youtube-personal-feed
 ```
 
-Create `~/.config/youtube-mcp/.env` with your Google Desktop OAuth credentials:
+Create `~/.config/youtube-personal-mcp/.env` with your Google Desktop OAuth credentials:
 
 ```bash
-mkdir -p ~/.config/youtube-mcp
-cat > ~/.config/youtube-mcp/.env <<'EOF'
+mkdir -p ~/.config/youtube-personal-mcp
+cat > ~/.config/youtube-personal-mcp/.env <<'EOF'
 CLIENT_ID=xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
 CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx
 EOF
-chmod 600 ~/.config/youtube-mcp/.env
+chmod 600 ~/.config/youtube-personal-mcp/.env
 ```
 
 Authenticate once, then run either executable from any directory:
@@ -57,7 +57,7 @@ youtube-personal-feed subscriptions --limit 20
 youtube-personal-feed-mcp
 ```
 
-The OAuth token is stored at `~/.config/youtube-mcp/token.json`. You can instead provide `CLIENT_ID` and `CLIENT_SECRET` as environment variables.
+The OAuth token is stored at `~/.config/youtube-personal-mcp/token.json`. You can instead provide `CLIENT_ID` and `CLIENT_SECRET` as environment variables.
 
 ### Local development
 
@@ -66,7 +66,7 @@ npm install
 npm run auth
 ```
 
-`npm run auth` prints a URL, opens your browser, and asks you to consent. Tokens are stored in `~/.config/youtube-mcp/token.json` (read-only to you) and are refreshed automatically at runtime.
+`npm run auth` prints a URL, opens your browser, and asks you to consent. Tokens are stored in `~/.config/youtube-personal-mcp/token.json` (read-only to you) and are refreshed automatically at runtime.
 
 > Note: because this uses an unverified "Desktop app" client, Google shows a "Google hasn't verified this app" warning the first time. Click *Advanced -> Go to <project> (unsafe)* to proceed.
 
