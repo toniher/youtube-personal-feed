@@ -91,7 +91,7 @@ export class YouTubeClient implements CredentialedClient {
     }
     if (/(invalid_grant|Invalid Credentials|401)/i.test(message)) {
       throw new AuthError(
-        "YouTube authorization failed or was revoked. Re-run `npm run auth`.",
+        "YouTube authorization failed or was revoked. Re-run `youtube-personal-feed-auth` (or `npm run auth`).",
       );
     }
     throw new Error(`YouTube API error: ${message}`);

@@ -21,7 +21,9 @@ async function openBrowser(url: string): Promise<void> {
         : ["xdg-open", [url]];
   try {
     const [bin, args] = cmd as [string, string[]];
-    spawn(bin, args, { stdio: "ignore", detached: true }).unref();
+    const child = spawn(bin, args, { stdio: "ignore", detached: true });
+    child.on("error", () => {});
+    child.unref();
   } catch {
     // Browser opening is best-effort; the URL is printed to the terminal.
   }
@@ -58,12 +60,6 @@ async function main(): Promise<void> {
     prompt: "consent",
     scope: [YOUTUBE_SCOPE],
   });
-
-  console.log(
-    "\nOpen this URL in your browser and sign in with your YouTube account:\n",
-  );
-  console.log(`  ${authUrl}\n`);
-  await openBrowser(authUrl);
 
   const timeout = setTimeout(
     () => {
@@ -117,6 +113,12 @@ async function main(): Promise<void> {
   });
 
   server.listen(port, "127.0.0.1");
+
+  console.log(
+    "\nOpen this URL in your browser and sign in with your YouTube account:\n",
+  );
+  console.log(`  ${authUrl}\n`);
+  await openBrowser(authUrl);
 }
 
 main().catch((err) => {
