@@ -149,6 +149,66 @@ server.tool(
 );
 
 server.tool(
+  "list_playlist",
+  "List videos from any YouTube playlist ID (e.g. LL for Liked Videos or custom PL...).",
+  {
+    playlistId: z
+      .string()
+      .describe(
+        "The YouTube playlist ID (e.g. 'LL' for Liked Videos or 'PL...').",
+      ),
+    maxResults: z
+      .number()
+      .int()
+      .min(1)
+      .max(50)
+      .default(15)
+      .describe("Max videos to return."),
+  },
+  async ({ playlistId, maxResults }) => {
+    const result = clientOrError();
+    if (!result.ok) return text({ error: result.error });
+    try {
+      const items: FeedVideo[] = await result.client.listPlaylist(
+        playlistId,
+        maxResults,
+        true,
+      );
+      return text({ count: items.length, videos: items });
+    } catch (err) {
+      return handleError(err);
+    }
+  },
+);
+
+server.tool(
+  "list_liked_videos",
+  "List the user's Liked Videos playlist ('LL'). Returns standard https://www.youtube.com/watch?v= URLs.",
+  {
+    maxResults: z
+      .number()
+      .int()
+      .min(1)
+      .max(50)
+      .default(15)
+      .describe("Max videos to return."),
+  },
+  async ({ maxResults }) => {
+    const result = clientOrError();
+    if (!result.ok) return text({ error: result.error });
+    try {
+      const items: FeedVideo[] = await result.client.getLikedVideos(
+        maxResults,
+        true,
+      );
+      return text({ count: items.length, videos: items });
+    } catch (err) {
+      return handleError(err);
+    }
+  },
+);
+
+server.tool(
   "get_video",
   "Get details for a single YouTube video by ID.",
   {

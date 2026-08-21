@@ -69,6 +69,7 @@ export class YouTubeClient implements CredentialedClient {
   auth: OAuth2Client;
   private subscriptionsCache: CacheEntry<SubscriptionItem[]> | null = null;
   private uploadsCache = new Map<string, CacheEntry<FeedVideo[]>>();
+  private playlistCache = new Map<string, CacheEntry<FeedVideo[]>>();
   private videoCache = new Map<string, CacheEntry<VideoDetail>>();
 
   constructor(auth: OAuth2Client) {
@@ -193,6 +194,55 @@ export class YouTubeClient implements CredentialedClient {
       value: unique,
     });
     return unique.slice(0, maxResults);
+  }
+
+  async listPlaylist(
+    playlistId: string,
+    maxResults = 15,
+    forceRefresh = false,
+  ): Promise<FeedVideo[]> {
+    const key = playlistId;
+    const cached = this.playlistCache.get(key);
+    if (!forceRefresh && cached && cached.expiresAt > Date.now()) {
+      return cached.value.slice(0, maxResults);
+    }
+    const out: FeedVideo[] = [];
+    const res = await this.api.playlistItems
+      .list({
+        part: ["snippet", "contentDetails"],
+        playlistId,
+        maxResults: Math.min(maxResults, 50),
+      })
+      .catch(YouTubeClient.mapError);
+    for (const item of res.data.items ?? []) {
+      const videoId = item.contentDetails?.videoId;
+      const snippet = item.snippet;
+      if (!videoId || !snippet) continue;
+      const channelId = snippet.videoOwnerChannelId ?? snippet.channelId ?? "";
+      out.push({
+        videoId,
+        title: snippet.title ?? "(untitled)",
+        channelId,
+        channelTitle:
+          snippet.videoOwnerChannelTitle ?? snippet.channelTitle ?? channelId,
+        publishedAt: snippet.publishedAt ?? "",
+        videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
+        description: snippet.description ?? undefined,
+      });
+    }
+    const unique = dedupeByVideoId(out);
+    this.playlistCache.set(key, {
+      expiresAt: Date.now() + UPLOADS_TTL_MS,
+      value: unique,
+    });
+    return unique.slice(0, maxResults);
+  }
+
+  async getLikedVideos(
+    maxResults = 15,
+    forceRefresh = false,
+  ): Promise<FeedVideo[]> {
+    return this.listPlaylist("LL", maxResults, forceRefresh);
   }
 
   async getVideoDetail(videoId: string): Promise<VideoDetail> {

@@ -8,6 +8,8 @@ Commands:
   subscriptions [--query <text>] [--limit <1-500>]
   feed [--channel-id <UC...>] [--limit <1-200>] [--since-days <1-365>]
   uploads <channel-id> [--limit <1-50>]
+  playlist <playlist-id> [--limit <1-50>]
+  liked [--limit <1-50>]
   video <video-id>
 `;
 
@@ -94,6 +96,26 @@ async function main(): Promise<void> {
         fail("uploads requires exactly one channel ID.");
       const videos = await client.listUploads(
         channelId,
+        numberOption(options, "--limit", 15, 1, 50),
+        true,
+      );
+      console.log(JSON.stringify({ count: videos.length, videos }, null, 2));
+      return;
+    }
+    case "playlist": {
+      const [playlistId] = positional;
+      if (!playlistId || positional.length > 1)
+        fail("playlist requires exactly one playlist ID.");
+      const videos = await client.listPlaylist(
+        playlistId,
+        numberOption(options, "--limit", 15, 1, 50),
+        true,
+      );
+      console.log(JSON.stringify({ count: videos.length, videos }, null, 2));
+      return;
+    }
+    case "liked": {
+      const videos = await client.getLikedVideos(
         numberOption(options, "--limit", 15, 1, 50),
         true,
       );

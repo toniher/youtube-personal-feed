@@ -4,7 +4,7 @@
 
 An MCP (Model Context Protocol) server and CLI that connects to your personal YouTube account and exposes your **subscription feed** to AI assistants.
 
-Fetch subscribed channels, list recent uploads across your feed, query specific channel uploads, and get `https://www.youtube.com/watch?v=` links ready for transcript tools.
+Fetch subscribed channels, list recent uploads across your feed, query specific channel uploads, access playlists (including **Liked Videos**), and get `https://www.youtube.com/watch?v=` links ready for transcript tools.
 
 ---
 
@@ -86,6 +86,8 @@ Add to your OpenCode MCP settings:
 | `list_subscriptions` | List channels you are subscribed to | `query?`, `maxResults?` (default 50) |
 | `list_feed` | Latest uploads across all subscriptions | `limit?` (default 20), `sinceDays?`, `channelId?` |
 | `list_channel_uploads` | Recent uploads for any channel | `channelId`, `maxResults?` (default 15) |
+| `list_playlist` | Videos from any playlist ID (`LL`, `PL...`) | `playlistId`, `maxResults?` (default 15) |
+| `list_liked_videos` | List items from your Liked Videos playlist (`LL`) | `maxResults?` (default 15) |
 | `get_video` | Detailed video metadata & statistics | `videoId` |
 
 *Feed items include standard `videoUrl` (`https://www.youtube.com/watch?v=...`) for easy integration with transcript MCP servers.*
@@ -105,6 +107,12 @@ youtube-personal-feed feed --limit 10 --since-days 7
 
 # Get uploads for a specific channel
 youtube-personal-feed uploads UCJaGVXG4KgOUXUtcmAHAOdA --limit 15
+
+# Get liked videos
+youtube-personal-feed liked --limit 10
+
+# Get items from any playlist ID
+youtube-personal-feed playlist PL1AA5273CEB50EB18 --limit 10
 
 # View video details
 youtube-personal-feed video 64wtzsSQx84

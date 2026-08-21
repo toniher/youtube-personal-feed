@@ -32,6 +32,16 @@ async function main(): Promise<void> {
       `${detail.title} | duration=${detail.duration} views=${detail.viewCount} ${detail.videoUrl}`,
     );
   }
+
+  console.log("\n== getLikedVideos (first 5) ==");
+  const liked = await client.getLikedVideos(5, true);
+  if (liked.length === 0) {
+    console.log("(no liked videos found)");
+  } else {
+    for (const v of liked) {
+      console.log(`- ${v.channelTitle}: ${v.title} (${v.videoUrl})`);
+    }
+  }
 }
 
 main().catch((err) => {
