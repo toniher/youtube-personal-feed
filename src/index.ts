@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -12,7 +14,7 @@ import type { FeedVideo, SubscriptionItem, VideoDetail } from "./types.js";
 
 const server = new McpServer({
   name: "youtube-personal-feed",
-  version: "0.1.3",
+  version: "0.1.4",
 });
 
 function text(payload: unknown): {

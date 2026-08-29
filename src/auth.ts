@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { platform } from "node:os";
@@ -102,12 +104,13 @@ async function main(): Promise<void> {
         server.close();
         clearTimeout(timeout);
         console.log("\nAuthorization complete. Tokens saved.");
+        process.exit(0);
       } catch (err) {
         res.writeHead(500).end("Failed to exchange authorization code");
         console.error("Token exchange failed:", err);
         server.close();
         clearTimeout(timeout);
-        process.exitCode = 1;
+        process.exit(1);
       }
     })();
   });

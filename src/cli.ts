@@ -66,6 +66,20 @@ async function main(): Promise<void> {
   }
 
   const { positional, options } = parseOptions(args);
+
+  const validCommands = new Set([
+    "subscriptions",
+    "feed",
+    "uploads",
+    "playlist",
+    "liked",
+    "video",
+  ]);
+
+  if (!validCommands.has(command)) {
+    fail(`Unknown command: ${command}.`);
+  }
+
   const client = createClient();
 
   switch (command) {

@@ -50,6 +50,10 @@ function createOAuthClient(): OAuth2Client {
   client.setCredentials(
     tokens as Parameters<OAuth2Client["setCredentials"]>[0],
   );
+  client.on("tokens", (newTokens) => {
+    const existing = readTokens() ?? {};
+    persistTokens({ ...existing, ...newTokens });
+  });
   return client;
 }
 
@@ -289,7 +293,7 @@ export class YouTubeClient implements CredentialedClient {
   ): Promise<FeedVideo[]> {
     const since =
       sinceDays != null ? Date.now() - sinceDays * 24 * 60 * 60 * 1000 : null;
-    const subscriptions = await this.fetchAllSubscriptions();
+    const subscriptions = await this.listSubscriptions(500);
     let channels = subscriptions;
     if (channelIdFilter) {
       channels = subscriptions.filter((s) => s.channelId === channelIdFilter);
