@@ -1,7 +1,18 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { createClient } from "./youtube.js";
+
+function getVersion(): string {
+  try {
+    return JSON.parse(
+      readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+    ).version as string;
+  } catch {
+    return "0.0.0";
+  }
+}
 
 const usage = `Usage: youtube-personal-feed <command> [options]
 
@@ -12,6 +23,10 @@ Commands:
   playlist <playlist-id> [--limit <1-50>]
   liked [--limit <1-50>]
   video <video-id>
+
+Options:
+  -h, --help     Show help
+  -v, --version  Show version
 `;
 
 function fail(message: string): never {
@@ -58,6 +73,10 @@ async function main(): Promise<void> {
     command === "help"
   ) {
     console.log(usage);
+    return;
+  }
+  if (command === "--version" || command === "-v" || command === "version") {
+    console.log(getVersion());
     return;
   }
 
