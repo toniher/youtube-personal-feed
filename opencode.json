@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "lsp": {
+    "typescript": {
+      "command": ["npx", "typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx", ".js", ".jsx"]
+    }
+  },
+  "agent": {
+    "release": {
+      "description": "Generate next tag from changes since last release, bump version, and create GitHub release",
+      "mode": "subagent",
+      "prompt": "{file:./.opencode/agents/release.md}"
+    }
+  }
+}

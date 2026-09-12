@@ -1,6 +1,6 @@
 {
   "name": "youtube-personal-feed",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
   "description": "MCP server exposing your personal YouTube subscription feed (Data API v3, OAuth)",
   "repository": {
@@ -46,7 +46,6 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "google-auth-library": "^11.0.0",
     "googleapis": "^174.0.0",
     "zod": "^4.4.3"
   },

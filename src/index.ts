@@ -4,12 +4,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { loadEnv } from "./config.js";
-import {
-  AuthError,
-  createClient,
-  QuotaError,
-  type YouTubeClient,
-} from "./youtube.js";
+import { AuthError, createClient, QuotaError } from "./youtube.js";
+import type { YouTubeClient } from "./youtube.js";
 import type { FeedVideo, SubscriptionItem, VideoDetail } from "./types.js";
 
 const server = new McpServer({
@@ -25,17 +21,12 @@ function text(payload: unknown): {
   };
 }
 
-function clientOrError():
-  | { ok: true; client: YouTubeClient }
-  | { ok: false; error: string } {
-  try {
-    return { ok: true, client: createClient() };
-  } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
+let cachedClient: YouTubeClient | null = null;
+
+function getClient(): YouTubeClient {
+  if (cachedClient) return cachedClient;
+  cachedClient = createClient();
+  return cachedClient;
 }
 
 async function handleError(err: unknown) {
@@ -65,10 +56,9 @@ server.tool(
       .describe("Max channels to return."),
   },
   async ({ query, maxResults }) => {
-    const result = clientOrError();
-    if (!result.ok) return text({ error: result.error });
     try {
-      const items: SubscriptionItem[] = await result.client.listSubscriptions(
+      const client = getClient();
+      const items: SubscriptionItem[] = await client.listSubscriptions(
         maxResults,
         query,
       );
@@ -106,10 +96,9 @@ server.tool(
       ),
   },
   async ({ limit, sinceDays, channelId }) => {
-    const result = clientOrError();
-    if (!result.ok) return text({ error: result.error });
     try {
-      const items: FeedVideo[] = await result.client.buildFeed(
+      const client = getClient();
+      const items: FeedVideo[] = await client.buildFeed(
         limit,
         sinceDays ?? null,
         channelId,
@@ -135,10 +124,9 @@ server.tool(
       .describe("Max videos to return."),
   },
   async ({ channelId, maxResults }) => {
-    const result = clientOrError();
-    if (!result.ok) return text({ error: result.error });
     try {
-      const items: FeedVideo[] = await result.client.listUploads(
+      const client = getClient();
+      const items: FeedVideo[] = await client.listUploads(
         channelId,
         maxResults,
         true,
@@ -168,10 +156,9 @@ server.tool(
       .describe("Max videos to return."),
   },
   async ({ playlistId, maxResults }) => {
-    const result = clientOrError();
-    if (!result.ok) return text({ error: result.error });
     try {
-      const items: FeedVideo[] = await result.client.listPlaylist(
+      const client = getClient();
+      const items: FeedVideo[] = await client.listPlaylist(
         playlistId,
         maxResults,
         true,
@@ -196,13 +183,9 @@ server.tool(
       .describe("Max videos to return."),
   },
   async ({ maxResults }) => {
-    const result = clientOrError();
-    if (!result.ok) return text({ error: result.error });
     try {
-      const items: FeedVideo[] = await result.client.getLikedVideos(
-        maxResults,
-        true,
-      );
+      const client = getClient();
+      const items: FeedVideo[] = await client.getLikedVideos(maxResults, true);
       return text({ count: items.length, videos: items });
     } catch (err) {
       return handleError(err);
@@ -219,10 +202,9 @@ server.tool(
       .describe("The YouTube video ID (from the watch?v= URL)."),
   },
   async ({ videoId }) => {
-    const result = clientOrError();
-    if (!result.ok) return text({ error: result.error });
     try {
-      const detail: VideoDetail = await result.client.getVideoDetail(videoId);
+      const client = getClient();
+      const detail: VideoDetail = await client.getVideoDetail(videoId);
       return text(detail);
     } catch (err) {
       return handleError(err);

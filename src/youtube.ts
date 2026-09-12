@@ -1,13 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { google } from "googleapis";
-import { OAuth2Client } from "google-auth-library";
-import {
-  hasCredentials,
-  loadEnv,
-  tokenFilePath,
-  credentialsMissingMessage,
-} from "./config.js";
+import { loadEnv, tokenFilePath } from "./config.js";
 import type { FeedVideo, SubscriptionItem, VideoDetail } from "./types.js";
 
 const SUBSCRIPTIONS_TTL_MS = 30 * 60 * 1000;
@@ -22,9 +16,7 @@ export class AuthError extends Error {}
 
 export class QuotaError extends Error {}
 
-interface CredentialedClient {
-  auth: OAuth2Client;
-}
+type OAuth2Client = InstanceType<typeof google.auth.OAuth2>;
 
 function readTokens(): Record<string, unknown> | null {
   const path = tokenFilePath();
@@ -37,7 +29,7 @@ function readTokens(): Record<string, unknown> | null {
 
 function createOAuthClient(): OAuth2Client {
   const { CLIENT_ID, CLIENT_SECRET } = process.env as Record<string, string>;
-  const client = new OAuth2Client({
+  const client = new google.auth.OAuth2({
     clientId: CLIENT_ID,
     clientSecret: CLIENT_SECRET,
   });
@@ -57,22 +49,15 @@ function createOAuthClient(): OAuth2Client {
   return client;
 }
 
-function persistTokens(tokens: Record<string, unknown>): void {
+export function persistTokens(tokens: Record<string, unknown>): void {
   const path = tokenFilePath();
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, JSON.stringify(tokens, null, 2), { mode: 0o600 });
 }
 
-function isTokenExpired(): boolean {
-  const tokens = readTokens();
-  if (!tokens || typeof tokens.expiry_date !== "number") return false;
-  return tokens.expiry_date < Date.now() + 60_000;
-}
-
-export class YouTubeClient implements CredentialedClient {
+export class YouTubeClient {
   auth: OAuth2Client;
   private subscriptionsCache: CacheEntry<SubscriptionItem[]> | null = null;
-  private uploadsCache = new Map<string, CacheEntry<FeedVideo[]>>();
   private playlistCache = new Map<string, CacheEntry<FeedVideo[]>>();
   private videoCache = new Map<string, CacheEntry<VideoDetail>>();
 
@@ -162,42 +147,10 @@ export class YouTubeClient implements CredentialedClient {
     maxResults = 15,
     forceRefresh = false,
   ): Promise<FeedVideo[]> {
-    const key = channelId;
-    const cached = this.uploadsCache.get(key);
-    if (!forceRefresh && cached && cached.expiresAt > Date.now()) {
-      return cached.value.slice(0, maxResults);
-    }
-    const uploadsPlaylistId = channelId.startsWith("UC")
+    const playlistId = channelId.startsWith("UC")
       ? `UU${channelId.slice(2)}`
       : channelId;
-    const out: FeedVideo[] = [];
-    const res = await this.api.playlistItems
-      .list({
-        part: ["snippet", "contentDetails"],
-        playlistId: uploadsPlaylistId,
-        maxResults: Math.min(maxResults, 50),
-      })
-      .catch(YouTubeClient.mapError);
-    for (const item of res.data.items ?? []) {
-      const videoId = item.contentDetails?.videoId;
-      const snippet = item.snippet;
-      if (!videoId || !snippet) continue;
-      out.push({
-        videoId,
-        title: snippet.title ?? "(untitled)",
-        channelId,
-        channelTitle: snippet.channelTitle ?? channelId,
-        publishedAt: snippet.publishedAt ?? "",
-        videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
-        description: snippet.description ?? undefined,
-      });
-    }
-    const unique = dedupeByVideoId(out);
-    this.uploadsCache.set(key, {
-      expiresAt: Date.now() + UPLOADS_TTL_MS,
-      value: unique,
-    });
-    return unique.slice(0, maxResults);
+    return this.listPlaylist(playlistId, maxResults, forceRefresh);
   }
 
   async listPlaylist(
@@ -351,11 +304,13 @@ function dedupeByVideoId(videos: FeedVideo[]): FeedVideo[] {
 
 export function createClient(): YouTubeClient {
   loadEnv();
-  if (!hasCredentials()) {
-    throw new Error(credentialsMissingMessage());
+  if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
+    throw new AuthError(
+      "Missing Google OAuth credentials. 1. Create a Desktop OAuth client in Google Cloud Console (see README.md). 2. Set CLIENT_ID and CLIENT_SECRET in the environment, .env, or ~/.config/youtube-personal-mcp/.env.",
+    );
   }
   const auth = createOAuthClient();
   return new YouTubeClient(auth);
 }
 
-export { isTokenExpired, persistTokens, readTokens };
+export { readTokens };

@@ -1,7 +1,7 @@
-import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadEnvFile } from "node:process";
 
 export const YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.readonly";
 
@@ -16,48 +16,10 @@ export function loadEnv(): void {
     join(PROJECT_ROOT, ".env"),
     join(configDir, "youtube-personal-mcp", ".env"),
   ]) {
-    let raw: string;
     try {
-      raw = readFileSync(envPath, "utf8");
-    } catch {
-      continue;
-    }
-    for (const line of raw.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq <= 0) continue;
-      const key = trimmed.slice(0, eq).trim();
-      let value = trimmed.slice(eq + 1).trim();
-      if (
-        (value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))
-      ) {
-        value = value.slice(1, -1);
-      }
-      if (key && process.env[key] === undefined) process.env[key] = value;
-    }
+      loadEnvFile(envPath);
+    } catch {}
   }
-}
-
-export function getClientId(): string {
-  return process.env.CLIENT_ID ?? "";
-}
-
-export function getClientSecret(): string {
-  return process.env.CLIENT_SECRET ?? "";
-}
-
-export function hasCredentials(): boolean {
-  return Boolean(getClientId() && getClientSecret());
-}
-
-export function credentialsMissingMessage(): string {
-  return [
-    "Missing Google OAuth credentials.",
-    "1. Create a Desktop OAuth client in Google Cloud Console (see README.md).",
-    "2. Set CLIENT_ID and CLIENT_SECRET in the environment, .env, or ~/.config/youtube-personal-mcp/.env.",
-  ].join(" ");
 }
 
 export function tokenFilePath(): string {
