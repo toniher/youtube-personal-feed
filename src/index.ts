@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -8,16 +7,15 @@ import { loadEnv } from "./config.js";
 import { AuthError, createClient, QuotaError } from "./youtube.js";
 import type { YouTubeClient } from "./youtube.js";
 import type { FeedVideo, SubscriptionItem, VideoDetail } from "./types.js";
+import { getVersion } from "./version.js";
 
-function getVersion(): string {
-  try {
-    return JSON.parse(
-      readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-    ).version as string;
-  } catch {
-    return "0.0.0";
-  }
-}
+const maxResultsSchema = z
+  .number()
+  .int()
+  .min(1)
+  .max(50)
+  .default(15)
+  .describe("Max videos to return.");
 
 const server = new McpServer({
   name: "youtube-personal-feed",
@@ -66,6 +64,7 @@ server.tool(
       .default(50)
       .describe("Max channels to return."),
   },
+  { openWorldHint: false },
   async ({ query, maxResults }) => {
     try {
       const client = getClient();
@@ -106,6 +105,7 @@ server.tool(
         "Restrict the feed to a single subscribed channel by its channel ID.",
       ),
   },
+  { openWorldHint: false },
   async ({ limit, sinceDays, channelId }) => {
     try {
       const client = getClient();
@@ -126,14 +126,9 @@ server.tool(
   "List the most recent uploads of a specific channel (not required to be subscribed).",
   {
     channelId: z.string().describe("The YouTube channel ID (UC...)."),
-    maxResults: z
-      .number()
-      .int()
-      .min(1)
-      .max(50)
-      .default(15)
-      .describe("Max videos to return."),
+    maxResults: maxResultsSchema,
   },
+  { openWorldHint: false },
   async ({ channelId, maxResults }) => {
     try {
       const client = getClient();
@@ -158,14 +153,9 @@ server.tool(
       .describe(
         "The YouTube playlist ID (e.g. 'LL' for Liked Videos or 'PL...').",
       ),
-    maxResults: z
-      .number()
-      .int()
-      .min(1)
-      .max(50)
-      .default(15)
-      .describe("Max videos to return."),
+    maxResults: maxResultsSchema,
   },
+  { openWorldHint: false },
   async ({ playlistId, maxResults }) => {
     try {
       const client = getClient();
@@ -184,15 +174,8 @@ server.tool(
 server.tool(
   "list_liked_videos",
   "List the user's Liked Videos playlist ('LL'). Returns standard https://www.youtube.com/watch?v= URLs.",
-  {
-    maxResults: z
-      .number()
-      .int()
-      .min(1)
-      .max(50)
-      .default(15)
-      .describe("Max videos to return."),
-  },
+  { maxResults: maxResultsSchema },
+  { openWorldHint: false },
   async ({ maxResults }) => {
     try {
       const client = getClient();
@@ -212,6 +195,7 @@ server.tool(
       .string()
       .describe("The YouTube video ID (from the watch?v= URL)."),
   },
+  { openWorldHint: false },
   async ({ videoId }) => {
     try {
       const client = getClient();

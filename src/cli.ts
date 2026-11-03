@@ -1,18 +1,8 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { createClient } from "./youtube.js";
-
-function getVersion(): string {
-  try {
-    return JSON.parse(
-      readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-    ).version as string;
-  } catch {
-    return "0.0.0";
-  }
-}
+import { getVersion } from "./version.js";
 
 const usage = `Usage: youtube-personal-feed <command> [options]
 

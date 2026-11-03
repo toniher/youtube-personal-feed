@@ -28,6 +28,7 @@
     "cli": "tsx src/cli.ts",
     "start": "node dist/index.js",
     "smoke": "tsx scripts/smoke.ts",
+"test": "tsx scripts/test.ts",
     "typecheck": "tsc --noEmit",
     "lint": "biome lint src scripts && biome format src scripts",
     "format": "biome format --write src scripts",

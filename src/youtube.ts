@@ -291,7 +291,7 @@ export class YouTubeClient {
   }
 }
 
-function dedupeByVideoId(videos: FeedVideo[]): FeedVideo[] {
+export function dedupeByVideoId(videos: FeedVideo[]): FeedVideo[] {
   const seen = new Set<string>();
   const out: FeedVideo[] = [];
   for (const v of videos) {
