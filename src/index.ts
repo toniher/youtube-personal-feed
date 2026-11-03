@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -8,9 +9,19 @@ import { AuthError, createClient, QuotaError } from "./youtube.js";
 import type { YouTubeClient } from "./youtube.js";
 import type { FeedVideo, SubscriptionItem, VideoDetail } from "./types.js";
 
+function getVersion(): string {
+  try {
+    return JSON.parse(
+      readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+    ).version as string;
+  } catch {
+    return "0.0.0";
+  }
+}
+
 const server = new McpServer({
   name: "youtube-personal-feed",
-  version: "0.1.4",
+  version: getVersion(),
 });
 
 function text(payload: unknown): {
