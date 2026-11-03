@@ -122,4 +122,5 @@ When making changes to this codebase, follow these steps:
 2. **Verify Types:** Run `npm run typecheck` to ensure there are no compilation errors or interface mismatches.
 3. **Build Verification:** Run `npm run build` to validate `dist/` and every binary entrypoint.
 4. **Package Verification:** When changing package metadata or binaries, run `npm pack --dry-run`.
-5. **Functional Verification:** If credentials and tokens are present, execute `npm run smoke` and an appropriate `npm run cli -- ...` command to verify API operations.
+5. **Lock file sync:** After any `package.json` version change (e.g. release bumps), run `npm install` so `package-lock.json` reflects the same version. The lock file must match `package.json` before committing a release.
+6. **Functional Verification:** If credentials and tokens are present, execute `npm run smoke` and an appropriate `npm run cli -- ...` command to verify API operations.
