@@ -7,6 +7,10 @@ import type { FeedVideo, SubscriptionItem, VideoDetail } from "./types.js";
 const SUBSCRIPTIONS_TTL_MS = 30 * 60 * 1000;
 const UPLOADS_TTL_MS = 10 * 60 * 1000;
 
+export function uploadsPlaylistId(channelId: string): string {
+  return channelId.startsWith("UC") ? `UU${channelId.slice(2)}` : channelId;
+}
+
 interface CacheEntry<T> {
   expiresAt: number;
   value: T;
@@ -57,22 +61,22 @@ export function persistTokens(tokens: Record<string, unknown>): void {
 
 export class YouTubeClient {
   auth: OAuth2Client;
+  private youtube: ReturnType<typeof google.youtube>;
   private subscriptionsCache: CacheEntry<SubscriptionItem[]> | null = null;
   private playlistCache = new Map<string, CacheEntry<FeedVideo[]>>();
   private videoCache = new Map<string, CacheEntry<VideoDetail>>();
 
-  constructor(auth: OAuth2Client) {
+  constructor(auth: OAuth2Client, youtube?: ReturnType<typeof google.youtube>) {
     this.auth = auth;
+    this.youtube =
+      youtube ?? google.youtube({ version: "v3", auth: this.auth as never });
   }
 
   private get api() {
-    return google.youtube({
-      version: "v3",
-      auth: this.auth as never,
-    });
+    return this.youtube;
   }
 
-  private static mapError(err: unknown): never {
+  public static mapError(err: unknown): never {
     const message = err instanceof Error ? err.message : String(err);
     if (/(quotaExceeded|quota exceeded|403)/i.test(message)) {
       throw new QuotaError(
@@ -147,9 +151,7 @@ export class YouTubeClient {
     maxResults = 15,
     forceRefresh = false,
   ): Promise<FeedVideo[]> {
-    const playlistId = channelId.startsWith("UC")
-      ? `UU${channelId.slice(2)}`
-      : channelId;
+    const playlistId = uploadsPlaylistId(channelId);
     return this.listPlaylist(playlistId, maxResults, forceRefresh);
   }
 
