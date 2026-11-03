@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { parseArgs } from "node:util";
+import { z } from "zod";
 import { createClient } from "./youtube.js";
 import { getVersion } from "./version.js";
 
@@ -23,19 +24,31 @@ function fail(message: string): never {
   throw new Error(`${message}\n\n${usage}`);
 }
 
-function numericOption(
-  value: string | undefined,
-  name: string,
-  defaultValue: number,
-  min: number,
-  max: number,
-): number {
-  if (value === undefined) return defaultValue;
-  const n = Number(value);
-  if (!Number.isInteger(n) || n < min || n > max) {
-    fail(`${name} must be an integer between ${min} and ${max}.`);
+function validateOptions<T>(
+  schema: z.ZodType<T>,
+  input: Record<string, string | undefined>,
+): T {
+  const result = schema.safeParse(input);
+  if (!result.success) {
+    fail(
+      `Invalid options: ${result.error.issues
+        .map((e: z.ZodIssue) => e.message)
+        .join(", ")}`,
+    );
   }
-  return n;
+  return result.data;
+}
+
+function limitSchema(min: number, max: number, defaultValue: number) {
+  return z
+    .string()
+    .optional()
+    .default(String(defaultValue))
+    .refine((val) => {
+      const n = Number(val);
+      return Number.isInteger(n) && n >= min && n <= max;
+    }, `Must be an integer between ${min} and ${max}.`)
+    .transform((val) => Number(val));
 }
 
 function getParseResult(
@@ -91,16 +104,14 @@ async function main(): Promise<void> {
         query: { type: "string" },
         limit: { type: "string" },
       });
-      const subscriptions = await client.listSubscriptions(
-        numericOption(
-          values.limit as string | undefined,
-          "--limit",
-          50,
-          1,
-          500,
-        ),
-        values.query as string | undefined,
+      const { query, limit } = validateOptions(
+        z.object({
+          query: z.string().optional(),
+          limit: limitSchema(1, 500, 50),
+        }),
+        values,
       );
+      const subscriptions = await client.listSubscriptions(limit, query);
       console.log(
         JSON.stringify({ count: subscriptions.length, subscriptions }, null, 2),
       );
@@ -112,24 +123,22 @@ async function main(): Promise<void> {
         limit: { type: "string" },
         "since-days": { type: "string" },
       });
+      const {
+        "channel-id": channelId,
+        limit,
+        "since-days": sinceDays,
+      } = validateOptions(
+        z.object({
+          "channel-id": z.string().optional(),
+          limit: limitSchema(1, 200, 20),
+          "since-days": limitSchema(1, 365, 1).optional(),
+        }),
+        values,
+      );
       const videos = await client.buildFeed(
-        numericOption(
-          values.limit as string | undefined,
-          "--limit",
-          20,
-          1,
-          200,
-        ),
-        values["since-days"] !== undefined
-          ? numericOption(
-              values["since-days"] as string,
-              "--since-days",
-              1,
-              1,
-              365,
-            )
-          : null,
-        values["channel-id"] as string | undefined,
+        limit,
+        sinceDays !== undefined ? sinceDays : null,
+        channelId,
       );
       console.log(JSON.stringify({ count: videos.length, videos }, null, 2));
       return;
@@ -141,11 +150,13 @@ async function main(): Promise<void> {
       const [channelId] = positionals;
       if (!channelId || positionals.length > 1)
         fail("uploads requires exactly one channel ID.");
-      const videos = await client.listUploads(
-        channelId,
-        numericOption(values.limit as string | undefined, "--limit", 15, 1, 50),
-        true,
+      const { limit } = validateOptions(
+        z.object({
+          limit: limitSchema(1, 50, 15),
+        }),
+        values,
       );
+      const videos = await client.listUploads(channelId, limit, true);
       console.log(JSON.stringify({ count: videos.length, videos }, null, 2));
       return;
     }
@@ -156,11 +167,13 @@ async function main(): Promise<void> {
       const [playlistId] = positionals;
       if (!playlistId || positionals.length > 1)
         fail("playlist requires exactly one playlist ID.");
-      const videos = await client.listPlaylist(
-        playlistId,
-        numericOption(values.limit as string | undefined, "--limit", 15, 1, 50),
-        true,
+      const { limit } = validateOptions(
+        z.object({
+          limit: limitSchema(1, 50, 15),
+        }),
+        values,
       );
+      const videos = await client.listPlaylist(playlistId, limit, true);
       console.log(JSON.stringify({ count: videos.length, videos }, null, 2));
       return;
     }
@@ -168,10 +181,13 @@ async function main(): Promise<void> {
       const { values } = getParseResult(args, {
         limit: { type: "string" },
       });
-      const videos = await client.getLikedVideos(
-        numericOption(values.limit as string | undefined, "--limit", 15, 1, 50),
-        true,
+      const { limit } = validateOptions(
+        z.object({
+          limit: limitSchema(1, 50, 15),
+        }),
+        values,
       );
+      const videos = await client.getLikedVideos(limit, true);
       console.log(JSON.stringify({ count: videos.length, videos }, null, 2));
       return;
     }

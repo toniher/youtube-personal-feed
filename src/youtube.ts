@@ -241,6 +241,20 @@ export class YouTubeClient {
     return detail;
   }
 
+  /**
+   * Builds a subscription feed: aggregates recent uploads across subscribed
+   * channels, sorts by publication date (newest first), deduplicates, and
+   * limits to the requested count.
+   *
+   * Quota cost (YouTube Data API v3, approx. per call with default 15 uploads
+   * per channel and 500 max subscriptions):
+   *   - subscriptions.list: 1 unit per page (up to ~10 pages for 500 subs)
+   *   - playlistItems.list: 1 unit per channel (10 channels per batch,
+   *     bounded concurrency; channels beyond the first 10 share results)
+   *
+   * Default 10,000 units/day quota supports roughly hundreds of feed builds.
+   * Each channel beyond the first batch of 10 adds ~1 unit.
+   */
   async buildFeed(
     limit: number,
     sinceDays: number | null,
